@@ -6,14 +6,9 @@
 
 <script>
   Vue.component('example', {
-    props: {
-      tags: {
-        type: Array,
-        default: () => [],
-      },
-    },
-    render(h) {
-      const children = this.tags.map((tag, index) => h(tag, { class: `tag-${index}` }, index))
+    functional: true,
+    render(h, { props: { tags } }) {
+      const children = tags.map((tag, index) => h(tag, { class: `tag-${index}` }, index))
       return h('div', children)
     },
   })
