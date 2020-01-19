@@ -1,9 +1,110 @@
-<script>
-function observe (obj) {
-  // Implement this!
-}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1 id="count"></h1>
+    <h1 id="name"></h1>
 
-function autorun (update) {
-  // Implement this!
-}
-</script>
+    <button id="addCount">Count ++</button><br />
+    <input type="text" id="editName" />
+
+    <script>
+      // == 數據響應方法封裝 Start
+      class Dep {
+        constructor() {
+          this.subscribers = new Set()
+        }
+
+        depend() {
+          if (activeUpdate) {
+            this.subscribers.add(activeUpdate)
+          }
+        }
+
+        notify() {
+          this.subscribers.forEach(sub => sub())
+        }
+      }
+
+      function observe(obj) {
+        Object.keys(obj).forEach(key => {
+          let internalValue = obj[key]
+
+          const dep = new Dep()
+
+          Object.defineProperty(obj, key, {
+            get() {
+              dep.depend()
+              return internalValue
+            },
+            set(newVal) {
+              const changed = internalValue !== newVal
+              internalValue = newVal
+              // triggering re-computation
+              if (changed) {
+                dep.notify()
+              }
+            },
+          })
+        })
+
+        return obj
+      }
+
+      let activeUpdate = null
+
+      function autorun(update) {
+        const wrappedUpdate = () => {
+          activeUpdate = wrappedUpdate
+          update()
+          activeUpdate = null
+        }
+        wrappedUpdate()
+      }
+      // == 數據響應方法封裝 End
+
+      // 使用
+      const state = {
+        count: 0,
+        name: 'Jack',
+      }
+
+      // 觀察監聽 state 資料
+      observe(state)
+
+      // 數據更新時要執行的方法
+      autorun(() => {
+        updateCountView(state.count)
+        updateNameView(state.name)
+      })
+
+      // update DOM
+      function updateCountView(count) {
+        countDOM = document.getElementById('count')
+        countDOM.textContent = count
+      }
+
+      function updateNameView(name) {
+        nameDOM = document.getElementById('name')
+        nameDOM.textContent = name
+      }
+
+      // 監聽 count Btn click 事件
+      const addBtn = document.getElementById('addCount')
+      addBtn.addEventListener('click', () => {
+        state.count++
+      })
+
+      // 監聽 editName input 事件
+      const editNameBtn = document.getElementById('editName')
+      editNameBtn.addEventListener('input', e => {
+        state.name = e.target.value
+      })
+    </script>
+  </body>
+</html>
