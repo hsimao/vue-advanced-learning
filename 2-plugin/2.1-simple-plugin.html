@@ -1,9 +1,32 @@
 <script src="../node_modules/vue/dist/vue.js"></script>
 
 <script>
-const RulesPlugin = {
-  // Implement this!
-}
+  const RulesPlugin = {
+    install(Vue) {
+      Vue.mixin({
+        created() {
+          const rules = this.$options.rules
+          if (rules) {
+            // 取得所有自訂數據規則
+            Object.keys(rules).forEach(key => {
+              const { validate, message } = rules[key]
 
-Vue.use(RulesPlugin)
+              // 監聽數據
+              this.$watch(key, newValue => {
+                // 驗證規則
+                const result = validate(newValue)
+
+                // 不符合規則將印出 message
+                if (!result) {
+                  console.log(message)
+                }
+              })
+            })
+          }
+        },
+      })
+    },
+  }
+
+  Vue.use(RulesPlugin)
 </script>
