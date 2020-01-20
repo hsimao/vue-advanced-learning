@@ -3,24 +3,40 @@
 <div id="app"></div>
 
 <script>
-function createApp ({ el, model, view, actions }) {
-  // Implement this!
-}
+  // 重新封裝 Vue 實例, 讓後續可以使用 functional 模式撰寫
+  function createApp({ el, model, view, actions }) {
+    Object.keys(actions).forEach(key => {
+      const originalAction = actions[key]
+      actions[key] = (...payload) => {
+        vm.model = originalAction(vm.model, actions, ...payload)
+      }
+    })
 
-// voila
-createApp({
-  el: '#app',
-  model: {
-    count: 0
-  },
-  actions: {
-    inc: ({ count }) => ({ count: count + 1 }),
-    dec: ({ count }) => ({ count: count - 1 })
-  },
-  view: (h, model, actions) => h('div', { attrs: { id: 'app' }}, [
-    model.count, ' ',
-    h('button', { on: { click: actions.inc }}, '+'),
-    h('button', { on: { click: actions.dec }}, '-')
-  ])
-})
+    const vm = new Vue({
+      el,
+      data: { model },
+      render(h) {
+        return view(h, this.model, actions)
+      },
+    })
+  }
+
+  // 使用封裝過的 Vue 使用 functional 撰寫
+  createApp({
+    el: '#app',
+    model: {
+      count: 0,
+    },
+    actions: {
+      inc: ({ count }) => ({ count: count + 1 }),
+      dec: ({ count }) => ({ count: count - 1 }),
+    },
+    view: (h, model, actions) =>
+      h('div', { attrs: { id: 'app' } }, [
+        model.count,
+        ' ',
+        h('button', { on: { click: actions.inc } }, '+'),
+        h('button', { on: { click: actions.dec } }, '-'),
+      ]),
+  })
 </script>
