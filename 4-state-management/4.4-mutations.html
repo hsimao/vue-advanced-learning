@@ -5,35 +5,62 @@
   <counter></counter>
   <counter></counter>
   <button @click="inc">increment</button>
+  <br /><br />
+  <userame></userame>
+  <input v-model="appUsername" type="text" placeholder="ChangeName" />
+  <button @click="changeName()">changName</button>
 </div>
 
 <script>
-function createStore ({ state, mutations }) {
-  // Implement this!
-}
-
-const store = createStore({
-  state: { count: 0 },
-  mutations: {
-    inc (state) {
-      state.count++
-    }
+  // 使用 Vue 實例封裝一個小型 Vuex
+  function createStore({ state, mutations }) {
+    return new Vue({
+      data: { state },
+      methods: {
+        commit(mutationType, payload) {
+          mutations[mutationType](this.state, payload)
+        },
+      },
+    })
   }
-})
 
-const Counter = {
-  render (h) {
-    return h('div', store.state.count)
-  }
-}
+  const store = createStore({
+    state: { count: 0, name: 'Mars' },
+    mutations: {
+      inc(state) {
+        state.count++
+      },
+      changeName(state, payload) {
+        state.name = payload
+      },
+    },
+  })
 
-new Vue({
-  el: '#app',
-  components: { Counter },
-  methods: {
-    inc () {
-      store.commit('inc')
-    }
+  const Counter = {
+    render(h) {
+      return h('div', store.state.count)
+    },
   }
-})
+
+  const Userame = {
+    render(h) {
+      return h('div', store.state.name)
+    },
+  }
+
+  new Vue({
+    el: '#app',
+    data: {
+      appUsername: '',
+    },
+    components: { Counter, Userame },
+    methods: {
+      inc() {
+        store.commit('inc')
+      },
+      changeName() {
+        store.commit('changeName', this.appUsername)
+      },
+    },
+  })
 </script>
