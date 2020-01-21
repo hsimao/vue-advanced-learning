@@ -7,24 +7,35 @@
 </div>
 
 <script>
-// '#/foo' -> Foo
-// '#/bar' -> Bar
-// '#/404' -> NotFound
+  // '#/foo' -> Foo
+  // '#/bar' -> Bar
+  // '#/404' -> NotFound
 
-const Foo = { template: `<div>foo</div>` }
-const Bar = { template: `<div>bar</div>` }
-const NotFound = { template: `<div>not found!</div>` }
+  const Foo = { template: `<div>foo</div>` }
+  const Bar = { template: `<div>bar</div>` }
+  const NotFound = { template: `<div>not found!</div>` }
 
-const routeTable = {
-  // Implement this!
-}
+  const routeTable = {
+    foo: Foo,
+    bar: Bar,
+  }
 
-window.addEventListener('hashchange', () => {
-  // Implement this!
-})
+  window.addEventListener('hashchange', () => {
+    app.url = window.location.hash.slice(1)
+  })
 
-const app = new Vue({
-  el: '#app',
-  // Implement this!
-})
+  const app = new Vue({
+    el: '#app',
+    data: {
+      url: window.location.hash.slice(1),
+    },
+    render(h) {
+      return h('div', [
+        h(routeTable[this.url] || NotFound),
+        h('a', { attrs: { href: '#foo' } }, 'foo'),
+        ' | ',
+        h('a', { attrs: { href: '#bar' } }, 'bar'),
+      ])
+    },
+  })
 </script>
