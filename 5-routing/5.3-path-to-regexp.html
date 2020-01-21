@@ -1,56 +1,83 @@
 <script src="../node_modules/vue/dist/vue.js"></script>
 <script src="./path-to-regexp.js"></script>
 
-<div id="app"></div>
+<div id="app">
+  <Routeviews></Routeviews>
+
+  <a href="#foo/123">foo/123</a>
+  <a href="#foo/234">foo/234</a>
+  <a href="#bar">bar</a>
+</div>
 
 <script>
-// '#/foo/123' -> foo with id: 123
-// '#/bar' -> Bar
-// '#/404' -> NotFound
-
-// path-to-regexp usage:
-// const regex = pathToRegexp(pattern)
-// const match = regex.exec(path)
-// const params = regex.keys.reduce((params, key, index) => {
-//   params[key] = match[index + 1]
-// }, {})
-
-const Foo = {
-  props: ['id'],
-  template: `<div>foo with id: {{ id }}</div>`
-}
-const Bar = { template: `<div>bar</div>` }
-const NotFound = { template: `<div>not found!</div>` }
-
-const routeTable = {
-  // Implement this!
-}
-
-window.addEventListener('hashchange', () => {
-  // Implement this!
-})
-
-const app = new Vue({
-  el: '#app',
-  data: {
-    url: window.location.hash.slice(1)
-  },
-  render (h) {
-    const path = '/' + this.url
-
-    let componentToRender
-    let props = {}
-
-    // Implement the logic to figure out proper values
-    // for componentToRender and props
-
-    return h('div', [
-      h(componentToRender, { props }),
-      h('a', { attrs: { href: '#foo/123' }}, 'foo'),
-      h('a', { attrs: { href: '#foo/234' }}, 'foo'),
-      ' | ',
-      h('a', { attrs: { href: '#bar' }}, 'bar')
-    ])
+  const Foo = {
+    props: ['id'],
+    template: `<div>foo with id: {{ id }}</div>`,
   }
-})
+  const Bar = { template: `<div>bar</div>` }
+  const NotFound = { template: `<div>not found!</div>` }
+
+  // 路由表
+  const routeTable = {
+    '/foo/:id': Foo,
+    '/bar': Bar,
+  }
+
+  /*
+    loop 路由表 routeTable
+    封裝匹配方法, 使用 pathToRegexp plugins
+    將 component、regex、dynamicSegments 儲存成陣列
+    後續用 render 顯示當前匹配組件頁面
+  */
+  const compiledRoutes = []
+  Object.keys(routeTable).forEach(path => {
+    const dynamicSegments = []
+    // 封裝匹配方法, dynamicSegments 透過 pathToRegexp 會返回 [{name: "id", ...}]
+    const regex = pathToRegexp(path, dynamicSegments)
+    const component = routeTable[path]
+
+    compiledRoutes.push({
+      component,
+      regex,
+      dynamicSegments,
+    })
+  })
+
+  // 仿 router-view 組件
+  const Routeviews = {
+    data() {
+      return {
+        url: window.location.hash.slice(1),
+      }
+    },
+    created() {
+      window.addEventListener('hashchange', () => {
+        this.url = window.location.hash.slice(1)
+      })
+    },
+    render(h) {
+      const path = '/' + this.url
+
+      let componentToRender
+      let props = {}
+
+      // loop compiledRoutes 若匹配到當前路由, 將取得路由 component 與動態路由 id 並傳遞到 props
+      compiledRoutes.some(route => {
+        const match = route.regex.exec(path)
+        if (match) {
+          componentToRender = route.component
+          route.dynamicSegments.forEach((segment, index) => {
+            props[segment.name] = match[index + 1]
+          })
+        }
+      })
+
+      return h('div', [h(componentToRender || NotFound, { props })])
+    },
+  }
+
+  const app = new Vue({
+    el: '#app',
+    components: { Routeviews },
+  })
 </script>
